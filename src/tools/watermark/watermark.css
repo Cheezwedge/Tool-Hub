@@ -1,0 +1,171 @@
+.wm {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.wm__column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.wm__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+/* --------------------------------------------------------- mode switcher */
+
+.wm__modes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.wm__mode {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  background: var(--section);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.wm__mode:hover {
+  border-color: var(--accent);
+}
+
+.wm__mode[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--section));
+}
+
+.wm__mode-name {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.wm__mode-hint {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* ------------------------------------------------------------- dropzone */
+
+.wm__dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 150px;
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  background: var(--section);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.wm__dropzone:hover,
+.wm__dropzone--over {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.wm__dropzone--over {
+  background: color-mix(in srgb, var(--accent) 10%, var(--section));
+}
+
+.wm__dropzone-icon {
+  font-size: 1.8rem;
+}
+
+.wm__queue {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.wm__queue--ready {
+  color: var(--success);
+}
+
+/* -------------------------------------------------------------- preview */
+
+.wm__preview {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  background: var(--section);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+#wm-preview {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+/* ------------------------------------------------------------ run panel */
+
+.wm__progress {
+  margin-block: var(--space-4) var(--space-5);
+}
+
+.wm__progress-text {
+  margin-top: var(--space-2);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.wm__privacy {
+  padding: var(--space-4);
+}
+
+#wm-shadow-fields[disabled] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------- responsive */
+
+@media (max-width: 1000px) {
+  .wm {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wm__column--run {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 660px) {
+  .wm {
+    grid-template-columns: 1fr;
+  }
+
+  .wm__column--run {
+    grid-column: auto;
+  }
+
+  .wm__grid {
+    grid-template-columns: 1fr;
+  }
+}

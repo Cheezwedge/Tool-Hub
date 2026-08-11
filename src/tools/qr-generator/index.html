@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Turn any text or link into a downloadable QR code — PNG or SVG, generated entirely in your browser."
+    />
+    <meta name="theme-color" content="#121212" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>QR Code Generator · Tool Hub</title>
+    <link rel="stylesheet" href="../../styles/tokens.css" />
+    <link rel="stylesheet" href="../../styles/base.css" />
+    <link rel="stylesheet" href="./qr.css" />
+  </head>
+  <body>
+    <div id="site-header"></div>
+
+    <main class="page qr">
+      <section class="qr__controls" aria-label="QR code content and options">
+        <div class="panel">
+          <h2 class="panel__title">Content</h2>
+
+          <div class="field">
+            <label class="field__label" for="qr-mode">Type</label>
+            <select id="qr-mode">
+              <option value="text">Plain text</option>
+              <option value="url">URL</option>
+              <option value="wifi">Wi-Fi network</option>
+            </select>
+          </div>
+
+          <!-- Text / URL -->
+          <div class="field" data-mode-panel="text url">
+            <label class="field__label" for="qr-text">
+              <span data-mode-label="text">Text to encode</span>
+            </label>
+            <textarea
+              id="qr-text"
+              placeholder="Type or paste anything — a link, a note, a phone number…"
+              spellcheck="false"
+            ></textarea>
+          </div>
+
+          <!-- Wi-Fi -->
+          <div data-mode-panel="wifi" hidden>
+            <div class="field">
+              <label class="field__label" for="wifi-ssid">Network name (SSID)</label>
+              <input id="wifi-ssid" type="text" autocomplete="off" spellcheck="false" />
+            </div>
+            <div class="field">
+              <label class="field__label" for="wifi-security">Security</label>
+              <select id="wifi-security">
+                <option value="WPA">WPA / WPA2 / WPA3</option>
+                <option value="WEP">WEP</option>
+                <option value="nopass">None (open network)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label" for="wifi-password">Password</label>
+              <input id="wifi-password" type="text" autocomplete="off" spellcheck="false" />
+              <p class="field__hint">
+                Stays on this device — the QR code is generated locally and never sent anywhere.
+              </p>
+            </div>
+            <label class="checkbox">
+              <input id="wifi-hidden" type="checkbox" />
+              <span>Hidden network</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2 class="panel__title">Logo</h2>
+
+          <div class="field">
+            <label class="field__label" for="qr-logo">
+              Centre logo (optional)
+            </label>
+            <input id="qr-logo" type="file" accept="image/*" />
+          </div>
+
+          <div class="qr__logo-preview" id="qr-logo-preview" hidden>
+            <img id="qr-logo-thumb" alt="" />
+            <span id="qr-logo-name"></span>
+            <button id="qr-logo-remove" class="btn" type="button">Remove</button>
+          </div>
+
+          <div class="field" id="qr-logo-size-field" hidden>
+            <label class="field__label" for="qr-logo-scale">
+              <span>Logo size</span>
+              <output class="field__value" id="qr-logo-scale-value" for="qr-logo-scale"></output>
+            </label>
+            <input id="qr-logo-scale" type="range" min="10" max="30" step="1" />
+            <p class="field__hint">
+              A logo covers part of the code. Error correction is raised to Q
+              automatically so it still scans — always test before printing.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2 class="panel__title">Appearance</h2>
+
+          <div class="field">
+            <label class="field__label" for="qr-size">
+              <span>Size</span>
+              <output class="field__value" id="qr-size-value" for="qr-size"></output>
+            </label>
+            <input id="qr-size" type="range" min="128" max="2048" step="32" />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="qr-margin">
+              <span>Quiet zone margin</span>
+              <output class="field__value" id="qr-margin-value" for="qr-margin"></output>
+            </label>
+            <input id="qr-margin" type="range" min="0" max="10" step="1" />
+            <p class="field__hint">
+              Blank border around the code. Scanners need at least 2 modules.
+            </p>
+          </div>
+
+          <div class="qr__colors">
+            <div class="field">
+              <label class="field__label" for="qr-fg">Foreground</label>
+              <input id="qr-fg" type="color" />
+            </div>
+            <div class="field">
+              <label class="field__label" for="qr-bg">Background</label>
+              <input id="qr-bg" type="color" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="checkbox">
+              <input id="qr-transparent" type="checkbox" />
+              <span>Transparent background</span>
+            </label>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="qr-ec">Error correction</label>
+            <select id="qr-ec">
+              <option value="L">L — Low (7% recoverable)</option>
+              <option value="M">M — Medium (15%)</option>
+              <option value="Q">Q — Quartile (25%)</option>
+              <option value="H">H — High (30%)</option>
+            </select>
+            <p class="field__hint">
+              Higher levels survive damage and logos, but pack in more squares.
+            </p>
+          </div>
+
+          <div class="btn-row">
+            <button id="qr-reset" class="btn" type="button">Reset to defaults</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="qr__output" aria-label="QR code preview">
+        <div class="panel qr__preview-panel">
+          <h2 class="panel__title">Preview</h2>
+
+          <div class="qr__preview" id="qr-preview">
+            <canvas id="qr-canvas" aria-label="QR code preview"></canvas>
+            <p class="empty-state" id="qr-placeholder">
+              Your QR code will appear here.
+            </p>
+          </div>
+
+          <p class="qr__status" id="qr-status" role="status" aria-live="polite"></p>
+
+          <div class="btn-row">
+            <button id="qr-download-png" class="btn btn--primary" type="button" disabled>
+              Download PNG
+            </button>
+            <button id="qr-download-svg" class="btn" type="button" disabled>
+              Download SVG
+            </button>
+          </div>
+          <p class="field__hint qr__note">
+            SVG is vector — use it for print or anything larger than the pixel size above.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./qr.js"></script>
+  </body>
+</html>

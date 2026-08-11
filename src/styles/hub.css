@@ -1,0 +1,87 @@
+/* Landing page only. Tool pages use tokens.css + base.css + their own file. */
+
+.hub {
+  padding-block: var(--space-7);
+}
+
+.hub__intro {
+  max-width: 60ch;
+  margin-bottom: var(--space-6);
+}
+
+.hub__title {
+  font-size: clamp(1.9rem, 5vw, 2.6rem);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-3);
+}
+
+.hub__subtitle {
+  color: var(--text-dim);
+  font-size: 1.02rem;
+}
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+
+.tool-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  transition: border-color 0.14s ease, background-color 0.14s ease,
+    transform 0.14s ease;
+}
+
+.tool-card:hover,
+.tool-card:focus-visible {
+  background: var(--section);
+  border-color: var(--accent);
+  color: var(--text);
+  transform: translateY(-2px);
+}
+
+.tool-card__icon {
+  font-size: 1.9rem;
+  line-height: 1;
+  margin-bottom: var(--space-2);
+}
+
+.tool-card__name {
+  font-size: 1.05rem;
+}
+
+.tool-card__description {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.hub__footer {
+  margin-top: var(--space-7);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.hub__footer code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  color: var(--text);
+}
+
+@media (max-width: 480px) {
+  .hub {
+    padding-block: var(--space-5) var(--space-6);
+  }
+
+  .tool-grid {
+    grid-template-columns: 1fr;
+  }
+}

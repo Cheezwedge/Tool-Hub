@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Batch-watermark images in your browser. Files are processed locally and never uploaded."
+    />
+    <meta name="theme-color" content="#121212" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Batch Watermark · Tool Hub</title>
+    <link rel="stylesheet" href="../../styles/tokens.css" />
+    <link rel="stylesheet" href="../../styles/base.css" />
+    <link rel="stylesheet" href="./watermark.css" />
+  </head>
+  <body>
+    <div id="site-header"></div>
+
+    <main class="page wm">
+      <!-- ------------------------------------------------ column 1: setup -->
+      <div class="wm__column">
+        <section class="panel" aria-labelledby="wm-source-title">
+          <h2 class="panel__title" id="wm-source-title">1 · Images</h2>
+
+          <div class="wm__modes" id="wm-modes" role="group" aria-label="Input mode">
+            <button
+              class="wm__mode"
+              type="button"
+              id="wm-mode-folder"
+              data-mode="folder"
+              aria-pressed="false"
+              hidden
+            >
+              <span class="wm__mode-name">Folder (in place)</span>
+              <span class="wm__mode-hint">
+                Writes watermarked copies back into the same folders
+              </span>
+            </button>
+            <button
+              class="wm__mode"
+              type="button"
+              id="wm-mode-zip"
+              data-mode="zip"
+              aria-pressed="false"
+            >
+              <span class="wm__mode-name">Files → ZIP</span>
+              <span class="wm__mode-hint">
+                Drop images or folders, download the results as a ZIP
+              </span>
+            </button>
+          </div>
+
+          <!-- Folder mode -->
+          <div class="wm__panel" data-source-panel="folder" hidden>
+            <div class="btn-row">
+              <button id="wm-pick-folder" class="btn" type="button">
+                Choose folder…
+              </button>
+            </div>
+            <p class="field__hint">
+              Includes every subfolder. Files that already end with the suffix are
+              skipped, so re-running is safe.
+            </p>
+          </div>
+
+          <!-- ZIP mode -->
+          <div class="wm__panel" data-source-panel="zip" hidden>
+            <div
+              class="wm__dropzone"
+              id="wm-dropzone"
+              tabindex="0"
+              role="button"
+              aria-label="Drop images here, or press Enter to choose files"
+            >
+              <span class="wm__dropzone-icon" aria-hidden="true">🖼️</span>
+              <span>Drop images or folders here</span>
+              <span class="field__hint">or use the buttons below</span>
+            </div>
+            <div class="btn-row">
+              <button id="wm-pick-files" class="btn" type="button">
+                Choose files…
+              </button>
+              <button id="wm-pick-dir-input" class="btn" type="button">
+                Choose folder…
+              </button>
+              <button id="wm-clear-files" class="btn" type="button">Clear</button>
+            </div>
+            <input
+              id="wm-file-input"
+              type="file"
+              hidden
+              accept="image/*"
+              multiple
+            />
+            <input
+              id="wm-dir-input"
+              type="file"
+              hidden
+              webkitdirectory
+              directory
+              multiple
+            />
+          </div>
+
+          <p class="wm__queue" id="wm-queue" role="status" aria-live="polite">
+            No images selected yet.
+          </p>
+        </section>
+
+        <section class="panel" aria-labelledby="wm-mark-title">
+          <h2 class="panel__title" id="wm-mark-title">2 · Watermark</h2>
+
+          <div class="field">
+            <label class="field__label" for="wm-image">
+              Watermark image (PNG with transparency)
+            </label>
+            <input id="wm-image" type="file" accept="image/png,image/*" />
+            <p class="field__hint" id="wm-image-name">No watermark loaded.</p>
+          </div>
+
+          <div class="wm__preview" id="wm-preview-wrap" hidden>
+            <canvas id="wm-preview" aria-label="Watermark placement preview"></canvas>
+          </div>
+        </section>
+      </div>
+
+      <!-- ---------------------------------------------- column 2: options -->
+      <div class="wm__column">
+        <section class="panel" aria-labelledby="wm-options-title">
+          <h2 class="panel__title" id="wm-options-title">3 · Options</h2>
+
+          <div class="wm__grid">
+            <div class="field">
+              <label class="field__label" for="wm-suffix">Filename suffix</label>
+              <input id="wm-suffix" type="text" spellcheck="false" />
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="wm-position">Position</label>
+              <select id="wm-position">
+                <option value="NorthWest">Top left</option>
+                <option value="North">Top centre</option>
+                <option value="NorthEast">Top right</option>
+                <option value="West">Middle left</option>
+                <option value="Center">Centre</option>
+                <option value="East">Middle right</option>
+                <option value="SouthWest">Bottom left</option>
+                <option value="South">Bottom centre</option>
+                <option value="SouthEast">Bottom right</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="wm-opacity">
+              <span>Opacity</span>
+              <output class="field__value" id="wm-opacity-value" for="wm-opacity"></output>
+            </label>
+            <input id="wm-opacity" type="range" min="0" max="100" step="1" />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="wm-scale">
+              <span>Scale (% of image width)</span>
+              <output class="field__value" id="wm-scale-value" for="wm-scale"></output>
+            </label>
+            <input id="wm-scale" type="range" min="5" max="50" step="1" />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="wm-margin">
+              <span>Margin from edge</span>
+              <output class="field__value" id="wm-margin-value" for="wm-margin"></output>
+            </label>
+            <input id="wm-margin" type="range" min="0" max="100" step="1" />
+          </div>
+
+          <div class="field">
+            <label class="checkbox">
+              <input id="wm-autoorient" type="checkbox" />
+              <span>Auto-orient (respect EXIF rotation)</span>
+            </label>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="wm-format">Output format</label>
+            <select id="wm-format">
+              <option value="keep">Keep original</option>
+              <option value="image/jpeg">JPEG</option>
+              <option value="image/png">PNG</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="wm-shadow-title">
+          <h2 class="panel__title" id="wm-shadow-title">4 · Drop shadow</h2>
+
+          <div class="field">
+            <label class="checkbox">
+              <input id="wm-shadow" type="checkbox" />
+              <span>Enable drop shadow</span>
+            </label>
+            <p class="field__hint">
+              Keeps a light watermark legible over light backgrounds.
+            </p>
+          </div>
+
+          <fieldset id="wm-shadow-fields">
+            <div class="field">
+              <label class="field__label" for="wm-shadow-opacity">
+                <span>Shadow opacity</span>
+                <output class="field__value" id="wm-shadow-opacity-value" for="wm-shadow-opacity"></output>
+              </label>
+              <input id="wm-shadow-opacity" type="range" min="0" max="100" step="1" />
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="wm-shadow-blur">
+                <span>Shadow blur</span>
+                <output class="field__value" id="wm-shadow-blur-value" for="wm-shadow-blur"></output>
+              </label>
+              <input id="wm-shadow-blur" type="range" min="0" max="20" step="1" />
+            </div>
+
+            <div class="wm__grid">
+              <div class="field">
+                <label class="field__label" for="wm-shadow-x">
+                  <span>Offset X</span>
+                  <output class="field__value" id="wm-shadow-x-value" for="wm-shadow-x"></output>
+                </label>
+                <input id="wm-shadow-x" type="range" min="0" max="20" step="1" />
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="wm-shadow-y">
+                  <span>Offset Y</span>
+                  <output class="field__value" id="wm-shadow-y-value" for="wm-shadow-y"></output>
+                </label>
+                <input id="wm-shadow-y" type="range" min="0" max="20" step="1" />
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="btn-row">
+            <button id="wm-reset" class="btn" type="button">Reset to defaults</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- ------------------------------------------------- column 3: run -->
+      <div class="wm__column wm__column--run">
+        <section class="panel" aria-labelledby="wm-run-title">
+          <h2 class="panel__title" id="wm-run-title">5 · Run</h2>
+
+          <div class="btn-row">
+            <button id="wm-start" class="btn btn--primary" type="button" disabled>
+              Start
+            </button>
+            <button id="wm-stop" class="btn btn--danger" type="button" disabled>
+              Stop
+            </button>
+          </div>
+
+          <div class="wm__progress">
+            <div class="progress">
+              <div class="progress__bar" id="wm-progress-bar"></div>
+            </div>
+            <p class="wm__progress-text" id="wm-progress-text" role="status" aria-live="polite">
+              Idle
+            </p>
+          </div>
+
+          <h3 class="panel__title">Log</h3>
+          <div class="log" id="wm-log" aria-label="Processing log"></div>
+        </section>
+
+        <section class="panel wm__privacy">
+          <p class="field__hint">
+            Every image is decoded, composited and re-encoded on this device.
+            Nothing is uploaded, and the tool keeps working with the network off.
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <script type="module" src="./watermark.js"></script>
+  </body>
+</html>

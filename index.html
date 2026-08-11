@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A small collection of self-contained browser tools. Everything runs locally on your device — nothing is uploaded."
+    />
+    <meta name="theme-color" content="#121212" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Tool Hub</title>
+    <link rel="stylesheet" href="./src/styles/tokens.css" />
+    <link rel="stylesheet" href="./src/styles/base.css" />
+    <link rel="stylesheet" href="./src/styles/hub.css" />
+  </head>
+  <body>
+    <main class="page hub">
+      <div class="hub__intro">
+        <h1 class="hub__title">Tool Hub</h1>
+        <p class="hub__subtitle">
+          A growing set of small, self-contained tools. Everything runs in your
+          browser — no accounts, no uploads, nothing leaves your device.
+        </p>
+      </div>
+
+      <div id="tool-grid" class="tool-grid"></div>
+
+      <footer class="hub__footer">
+        <p>
+          Works offline once loaded. Add a new tool by dropping a folder into
+          <code>src/tools/</code> and registering it.
+        </p>
+      </footer>
+    </main>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,38 @@
+/* Design tokens — the single source of truth for the hub's look.
+   Every tool page imports this before its own stylesheet. */
+
+:root {
+  /* Surfaces */
+  --bg: #121212;
+  --panel: #1e1e1e;
+  --section: #282828;
+  --border: #3c3c3c;
+
+  /* Text */
+  --text: #eeeeee;
+  --text-dim: #8c8c8c;
+
+  /* Accent + status */
+  --accent: #4a9eff;
+  --accent-hover: #6ab4ff;
+  --success: #4caf50;
+  --warning: #ff9800;
+  --error: #f44336;
+
+  /* Shape + type */
+  --radius: 10px;
+  --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "Consolas", ui-monospace, monospace;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Focus ring, kept consistent across every interactive control */
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
