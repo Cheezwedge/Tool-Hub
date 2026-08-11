@@ -12,11 +12,14 @@
 import { chromium } from "playwright";
 import JSZip from "jszip";
 import jsQR from "jsqr";
-import { mkdtempSync, readFileSync, statSync } from "node:fs";
+import { mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:4173";
+/** The CORS-permitting docs site from scripts/fixture-site.mjs. */
+const FIXTURE = process.env.FIXTURE_URL ?? "http://localhost:4180/docs/";
 const OUT = mkdtempSync(join(tmpdir(), "tool-hub-e2e-"));
 
 const results = [];
@@ -40,7 +43,7 @@ page.on("console", (msg) => msg.type() === "error" && pageErrors.push(msg.text()
 console.log("\nHub");
 await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
 
-check("renders one card per registry entry", (await page.locator(".tool-card").count()) === 2);
+check("renders one card per registry entry", (await page.locator(".tool-card").count()) === 3);
 check(
   "cards link to their tool pages",
   (await page.locator('.tool-card[href$="watermark/index.html"]').count()) === 1 &&
@@ -338,6 +341,124 @@ check(
 );
 
 check("no horizontal overflow at 390px", !(await overflows(page, 390)));
+
+/* -------------------------------------------------------- site → markdown */
+
+console.log("\nSite to Markdown");
+await page.setViewportSize({ width: 1440, height: 1000 });
+await page.goto(`${BASE}/src/tools/site-to-markdown/index.html`, { waitUntil: "networkidle" });
+await page.evaluate(() => localStorage.removeItem("tool-hub:site-to-markdown"));
+await page.reload({ waitUntil: "networkidle" });
+
+// --- local HTML files ---
+await page.evaluate(async (fixture) => {
+  const pages = [
+    ["01-intro.html", "Intro", "<p>Hello from the intro page with quite a lot of text.</p><pre><code class=\"language-js\">const a = 1;</code></pre>"],
+    ["02-api.html", "API", "<table><thead><tr><th>Name</th><th>Type</th></tr></thead><tbody><tr><td>id</td><td>string</td></tr></tbody></table>"],
+  ];
+
+  const transfer = new DataTransfer();
+  for (const [name, title, body] of pages) {
+    const html = `<!doctype html><html><head><title>${title}</title></head><body>` +
+      `<nav>NAVIGATION NOISE</nav><aside class="sidebar">SIDEBAR NOISE</aside>` +
+      `<main><h1>${title}</h1>${body}<p><a href="${fixture}auth">rel link</a></p></main>` +
+      `<footer>FOOTER NOISE</footer><script>var x=1;</script></body></html>`;
+    transfer.items.add(new File([html], name, { type: "text/html" }));
+  }
+  const input = document.getElementById("s2m-file-input");
+  input.files = transfer.files;
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+}, FIXTURE);
+await page.waitForTimeout(300);
+
+check("local HTML files are queued", /2 HTML file\(s\) ready/.test(await page.locator("#s2m-queue").textContent()));
+
+await page.click("#s2m-run");
+await page.waitForTimeout(1200);
+
+const localMd = await page.locator("#s2m-preview").textContent();
+check("converts local files to one Markdown document", localMd.includes("## Intro") && localMd.includes("## API"));
+check("strips nav, sidebar, footer and scripts", !/NAVIGATION NOISE|SIDEBAR NOISE|FOOTER NOISE|var x=1/.test(localMd));
+check("keeps fenced code with its language", localMd.includes("```js"), localMd.match(/```\w*/)?.[0]);
+check("converts tables to GFM", /\|\s*Name\s*\|\s*Type\s*\|/.test(localMd));
+check("emits a table of contents", localMd.includes("## Contents") && localMd.includes("- [Intro](#intro)"));
+check(
+  "nests page headings under the page title",
+  // The page's own "# Intro" is dropped as a duplicate of the "## Intro"
+  // section heading, leaving exactly one Intro heading in the document.
+  (localMd.match(/^#+ Intro$/gm) ?? []).length === 1,
+  JSON.stringify(localMd.match(/^#+ Intro$/gm))
+);
+check(
+  "reports token and word stats",
+  Number((await page.locator("#s2m-stat-tokens").textContent()).replace(/,/g, "")) > 0 &&
+    (await page.locator("#s2m-stat-pages").textContent()) === "2"
+);
+
+const mdFile = await download(page, "#s2m-download");
+check("Markdown downloads", statSync(mdFile.path).size > 200, mdFile.name);
+
+// --- in-browser crawl against the CORS-permitting fixture site ---
+await page.click('.s2m__mode[data-mode="crawl"]');
+await page.fill("#s2m-url", FIXTURE);
+await page.locator("#s2m-delay").fill("0");
+await page.fill("#s2m-output-name", "fixture.md");
+await page.waitForTimeout(200);
+await page.click("#s2m-run");
+await page.waitForFunction(
+  () => /Done|Nothing/.test(document.getElementById("s2m-progress-text").textContent),
+  null,
+  { timeout: 30000 }
+);
+
+const crawlMd = await page.locator("#s2m-preview").textContent();
+check(
+  "crawl follows in-scope links",
+  ["Getting Started", "Authentication", "Rates"].every((t) => crawlMd.includes(`## ${t}`)),
+  (await page.locator("#s2m-stat-pages").textContent()) + " pages"
+);
+check("crawl honours the path-prefix scope", !crawlMd.includes("should be out of scope"));
+check("crawl rewrites relative images to absolute", crawlMd.includes("http://localhost:4180/img/diagram.png"));
+check(
+  "crawl demotes in-page headings below the page title",
+  crawlMd.includes("## Getting Started") &&
+    crawlMd.includes("### Install") &&
+    !/^# Getting Started$/m.test(crawlMd)
+);
+
+// --- generated Python script ---
+await page.click('.s2m__mode[data-mode="script"]');
+await page.waitForTimeout(150);
+check("run button relabels for script mode", (await page.locator("#s2m-run").textContent()).trim() === "Generate script");
+
+await page.click("#s2m-run");
+await page.waitForTimeout(400);
+const scriptFile = await download(page, "#s2m-download");
+const pythonSource = readFileSync(scriptFile.path, "utf8");
+check("generates a Python file", scriptFile.name.endsWith(".py") && pythonSource.startsWith("#!/usr/bin/env python3"), scriptFile.name);
+check("bakes the configured URL and scope in", pythonSource.includes(`START_URL = "${FIXTURE}"`) && pythonSource.includes('PATH_PREFIX = "/docs/"'));
+
+// The real test: does the generated script actually run and produce the file?
+const workdir = mkdtempSync(join(tmpdir(), "tool-hub-py-"));
+writeFileSync(join(workdir, "crawler.py"), pythonSource);
+let pythonOk = false;
+let pythonNote = "";
+try {
+  execFileSync("python3", ["crawler.py"], { cwd: workdir, timeout: 90000, stdio: "pipe" });
+  const produced = readFileSync(join(workdir, "fixture.md"), "utf8");
+  pythonOk =
+    produced.includes("### Install") &&
+    !/^# Getting Started$/m.test(produced) &&
+    produced.includes("## Getting Started") &&
+    produced.includes("## Authentication") &&
+    produced.includes("## Rates") &&
+    !produced.includes("should be out of scope") &&
+    !/NAVIGATION|Sidebar noise|Footer noise/i.test(produced);
+  pythonNote = `${produced.length} chars`;
+} catch (error) {
+  pythonNote = String(error.stderr ?? error.message).slice(0, 200);
+}
+check("the generated Python runs and produces the same archive", pythonOk, pythonNote);
 
 console.log("");
 check("no uncaught page errors", pageErrors.length === 0, pageErrors.join(" | ").slice(0, 300));

@@ -29,6 +29,14 @@ export const tools = [
     icon: "▦",
     path: "src/tools/qr-generator/index.html",
   },
+  {
+    id: "site-to-markdown",
+    name: "Site to Markdown",
+    description:
+      "Compile documentation pages into one Markdown file to feed an AI model.",
+    icon: "📚",
+    path: "src/tools/site-to-markdown/index.html",
+  },
 ];
 
 /** Look up a registry entry by id. Returns undefined if there is no match. */

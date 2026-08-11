@@ -2,15 +2,20 @@
 
 A single static site that collects small, self-contained browser tools.
 
-Everything runs **client-side**. There is no backend, no account, no upload —
-images are decoded and re-encoded on your own device, and once the page has
-loaded the tools keep working with the network off. That also means the whole
-thing hosts for free anywhere that serves static files.
+The work happens **client-side**. There is no backend and no account: images
+are decoded and re-encoded on your own device, and nothing is uploaded to a
+server of ours, because there isn't one. That also means the whole thing hosts
+for free anywhere that serves static files.
+
+Tools that need the network say so — only Site to Markdown does, and only in
+the modes that fetch remote pages. The rest keep working offline once this
+page has loaded.
 
 | Tool | What it does |
 | --- | --- |
 | **Batch Watermark** | Composites a PNG watermark onto many images at once, with position, scale, opacity and drop-shadow control. Writes results back into your folders (Chrome/Edge) or hands you a ZIP (any browser). |
 | **QR Code Generator** | Turns text, a URL, or Wi-Fi credentials into a QR code, with an optional logo in the centre. Downloads as PNG or vector SVG. |
+| **Site to Markdown** | Compiles documentation pages into one Markdown file for feeding to an AI model. Converts saved HTML locally, crawls via a proxy, or generates a standalone Python crawler. |
 
 ---
 
@@ -128,6 +133,7 @@ index.html                  Landing page (tool grid)
 vite.config.js              Multi-page config; discovers tool entry points
 public/favicon.svg
 scripts/e2e.mjs             Browser smoke test
+scripts/fixture-site.mjs    Throwaway docs site the crawler test runs against
 src/
   main.js                   Boots the landing page from the registry
   registry.js               THE list of all tools — single source of truth
@@ -140,6 +146,8 @@ src/
   lib/download.js           Canvas → blob → file helpers
   tools/watermark/          index.html, watermark.js, composite.js, watermark.css
   tools/qr-generator/       index.html, qr.js, qr.css
+  tools/site-to-markdown/   index.html, site-to-markdown.js, extract.js,
+                            script-template.js, site-to-markdown.css
 ```
 
 ---
@@ -190,6 +198,41 @@ anything — the tool says so, and it means it.
 Both exports come from the same settings: **PNG** off the canvas, **SVG** as
 real vector for print or large-format work.
 
+### Site to Markdown
+
+Produces one Markdown file from a set of documentation pages — headings,
+fenced code blocks with their language intact, and GFM tables — plus a table
+of contents, per-page source links, and a character/word/token count, since
+the point is usually to paste the result into a model's context.
+
+**A browser cannot crawl other websites.** Cross-origin `fetch` of, say,
+`docs.example.com` is blocked by CORS; that is the browser security model, not
+a gap in the tool. So there are three routes to the same output:
+
+1. **Local HTML files** — save pages with Ctrl/Cmd-S and drop them in (a whole
+   folder works). Entirely offline, no proxy, no caveats. Best for a handful
+   of pages.
+2. **Generate a crawler script** — configure the crawl here, download a
+   self-contained Python script with your settings baked in, run it locally.
+   This is the route for a whole site, and it is what the browser cannot do
+   itself. The script covers robots.txt, path scoping, exclude patterns, a
+   polite delay, and an optional Playwright mode for JS-rendered docs.
+3. **Crawl from the page** — real BFS crawling in the browser, but only
+   through a fetch proxy you supply, because of the CORS limit above.
+   **Everything you crawl passes through whoever runs that proxy**, so the
+   field is deliberately empty by default rather than pre-filled with someone
+   else's service.
+
+Extraction is shared by all three: the article body is found by trying
+`main`, `article`, `.markdown-body` and similar (overridable with your own
+selector), nav/header/footer/sidebar/script are stripped, and relative links
+and images are rewritten to absolute so the archive stands alone. Fetched HTML
+is parsed into a detached document and never inserted into the page — only the
+resulting Markdown text is rendered.
+
+Be reasonable about what you crawl: respect robots.txt and the site's terms,
+keep the delay non-zero, and remember a page cap exists for a reason.
+
 ### Parity with the original tools
 
 Both tools are browser reimplementations of things that already existed — a
@@ -225,11 +268,17 @@ placement and shadow.
 npx playwright install chromium   # once
 npm run build
 npm run preview &                 # serves http://localhost:4173
+npm run fixture &                 # serves http://localhost:4180/docs/
 npm run test:e2e
 ```
 
-Set `BASE_URL` to test a different server, or `PW_CHROMIUM` to point at a
-Chromium binary you already have.
+`npm run fixture` starts a throwaway CORS-permitting docs site. The crawler
+tests run against it, and the generated Python crawler is *actually executed*
+against it too — so the script this tool hands you is verified to run, not
+just to look right. That part needs `pip install requests beautifulsoup4
+markdownify`; without it that single check fails and the rest still run.
+
+Set `BASE_URL`, `FIXTURE_URL`, or `PW_CHROMIUM` to point at different targets.
 
 Not covered automatically: the File System Access folder mode, because the
 native directory picker cannot be driven by a test. Check that one by hand in

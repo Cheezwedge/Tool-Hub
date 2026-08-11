@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Turn documentation sites into a single Markdown file for feeding to an AI model."
+    />
+    <meta name="theme-color" content="#121212" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Site to Markdown · Tool Hub</title>
+    <link rel="stylesheet" href="../../styles/tokens.css" />
+    <link rel="stylesheet" href="../../styles/base.css" />
+    <link rel="stylesheet" href="./site-to-markdown.css" />
+  </head>
+  <body>
+    <div id="site-header"></div>
+
+    <main class="page s2m">
+      <!-- ------------------------------------------------------- controls -->
+      <div class="s2m__column">
+        <section class="panel" aria-labelledby="s2m-mode-title">
+          <h2 class="panel__title" id="s2m-mode-title">1 · How to get the pages</h2>
+
+          <div class="s2m__modes" role="group" aria-label="Input mode">
+            <button class="s2m__mode" type="button" data-mode="files" aria-pressed="true">
+              <span class="s2m__mode-name">Local HTML files</span>
+              <span class="s2m__mode-hint">
+                Drop saved pages in. Works everywhere, nothing hits the network.
+              </span>
+            </button>
+            <button class="s2m__mode" type="button" data-mode="script" aria-pressed="false">
+              <span class="s2m__mode-name">Generate a crawler script</span>
+              <span class="s2m__mode-hint">
+                Configure here, run the Python locally. Best for a whole site.
+              </span>
+            </button>
+            <button class="s2m__mode" type="button" data-mode="crawl" aria-pressed="false">
+              <span class="s2m__mode-name">Crawl from this page</span>
+              <span class="s2m__mode-hint">
+                In-browser. Needs a fetch proxy — see the note.
+              </span>
+            </button>
+          </div>
+
+          <!-- Local files -->
+          <div data-panel="files">
+            <div
+              class="s2m__dropzone"
+              id="s2m-dropzone"
+              tabindex="0"
+              role="button"
+              aria-label="Drop HTML files here, or press Enter to choose files"
+            >
+              <span class="s2m__dropzone-icon" aria-hidden="true">📄</span>
+              <span>Drop .html files or a folder here</span>
+              <span class="field__hint">
+                In your browser: Save Page As → “Webpage, Complete” or “HTML only”
+              </span>
+            </div>
+            <div class="btn-row">
+              <button id="s2m-pick-files" class="btn" type="button">Choose files…</button>
+              <button id="s2m-pick-dir" class="btn" type="button">Choose folder…</button>
+              <button id="s2m-clear" class="btn" type="button">Clear</button>
+            </div>
+            <input id="s2m-file-input" type="file" hidden accept=".html,.htm,text/html" multiple />
+            <input id="s2m-dir-input" type="file" hidden webkitdirectory directory multiple />
+            <p class="s2m__queue" id="s2m-queue" role="status" aria-live="polite">
+              No files loaded yet.
+            </p>
+          </div>
+
+          <!-- Script generator + crawler share the URL/scope fields -->
+          <div data-panel="script crawl" hidden>
+            <div class="field">
+              <label class="field__label" for="s2m-url">Start URL</label>
+              <input
+                id="s2m-url"
+                type="url"
+                placeholder="https://docs.example.com/"
+                spellcheck="false"
+              />
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="s2m-scope">Follow links</label>
+              <select id="s2m-scope">
+                <option value="prefix">Under the start URL's path only</option>
+                <option value="host">Anywhere on the same host</option>
+              </select>
+            </div>
+
+            <div class="s2m__grid">
+              <div class="field">
+                <label class="field__label" for="s2m-max">
+                  <span>Page cap</span>
+                  <output class="field__value" id="s2m-max-value" for="s2m-max"></output>
+                </label>
+                <input id="s2m-max" type="range" min="10" max="2000" step="10" />
+              </div>
+              <div class="field">
+                <label class="field__label" for="s2m-delay">
+                  <span>Delay between requests</span>
+                  <output class="field__value" id="s2m-delay-value" for="s2m-delay"></output>
+                </label>
+                <input id="s2m-delay" type="range" min="0" max="3000" step="100" />
+              </div>
+            </div>
+
+            <div class="field" data-panel="crawl" hidden>
+              <label class="field__label" for="s2m-proxy">Fetch proxy</label>
+              <input
+                id="s2m-proxy"
+                type="text"
+                placeholder="https://your-proxy.example/?url={url}"
+                spellcheck="false"
+              />
+              <p class="field__hint">
+                Browsers block reading pages from other sites (CORS), so an
+                in-browser crawl has to go through a proxy that adds the missing
+                header. <strong>Every URL and page you crawl passes through
+                whoever runs that proxy</strong> — use one you trust or host your
+                own. Must contain <code>{url}</code>. Leave empty to try a direct
+                fetch, which only works on CORS-permissive sites.
+              </p>
+            </div>
+
+            <div class="field" data-panel="script" hidden>
+              <label class="checkbox">
+                <input id="s2m-render-js" type="checkbox" />
+                <span>Site needs JavaScript to render (use Playwright)</span>
+              </label>
+              <p class="field__hint">
+                Turn this on if a plain fetch returns near-empty pages — common
+                for docs built with ReadMe, Docusaurus or similar.
+              </p>
+            </div>
+
+            <div class="field" data-panel="script" hidden>
+              <label class="checkbox">
+                <input id="s2m-robots" type="checkbox" />
+                <span>Respect robots.txt</span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="s2m-extract-title">
+          <h2 class="panel__title" id="s2m-extract-title">2 · What to keep</h2>
+
+          <div class="field">
+            <label class="field__label" for="s2m-content">Content selector</label>
+            <input
+              id="s2m-content"
+              type="text"
+              placeholder="auto-detect"
+              spellcheck="false"
+            />
+            <p class="field__hint">
+              CSS selector for the article body. Left blank, it tries
+              <code>main</code>, <code>article</code>, <code>.markdown-body</code>
+              and friends.
+            </p>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="s2m-strip">Also remove</label>
+            <input
+              id="s2m-strip"
+              type="text"
+              placeholder=".ad, .feedback-widget"
+              spellcheck="false"
+            />
+            <p class="field__hint">
+              Comma-separated selectors, on top of scripts, nav, header, footer
+              and sidebars, which always go.
+            </p>
+          </div>
+
+          <div class="field" data-panel="script crawl" hidden>
+            <label class="field__label" for="s2m-exclude">Skip URLs matching</label>
+            <input
+              id="s2m-exclude"
+              type="text"
+              placeholder="/blog/, \.pdf$"
+              spellcheck="false"
+            />
+            <p class="field__hint">Comma-separated regular expressions.</p>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="s2m-output-title">
+          <h2 class="panel__title" id="s2m-output-title">3 · Output</h2>
+
+          <div class="field">
+            <label class="field__label" for="s2m-output-name">Filename</label>
+            <input id="s2m-output-name" type="text" spellcheck="false" />
+          </div>
+
+          <div class="field">
+            <label class="checkbox">
+              <input id="s2m-toc" type="checkbox" />
+              <span>Include a table of contents</span>
+            </label>
+          </div>
+
+          <div class="field">
+            <label class="checkbox">
+              <input id="s2m-source-links" type="checkbox" />
+              <span>Note each page's source URL</span>
+            </label>
+          </div>
+
+          <div class="btn-row">
+            <button id="s2m-reset" class="btn" type="button">Reset to defaults</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- ---------------------------------------------------------- output -->
+      <div class="s2m__column">
+        <section class="panel" aria-labelledby="s2m-run-title">
+          <h2 class="panel__title" id="s2m-run-title">4 · Build it</h2>
+
+          <div class="btn-row">
+            <button id="s2m-run" class="btn btn--primary" type="button">Convert</button>
+            <button id="s2m-stop" class="btn btn--danger" type="button" disabled>Stop</button>
+            <button id="s2m-download" class="btn" type="button" disabled>Download</button>
+            <button id="s2m-copy" class="btn" type="button" disabled>Copy</button>
+          </div>
+
+          <div class="s2m__progress">
+            <div class="progress">
+              <div class="progress__bar" id="s2m-progress-bar"></div>
+            </div>
+            <p class="wm__progress-text" id="s2m-progress-text" role="status" aria-live="polite">
+              Idle
+            </p>
+          </div>
+
+          <dl class="s2m__stats" id="s2m-stats" hidden>
+            <div><dt>Pages</dt><dd id="s2m-stat-pages">0</dd></div>
+            <div><dt>Words</dt><dd id="s2m-stat-words">0</dd></div>
+            <div><dt>Characters</dt><dd id="s2m-stat-chars">0</dd></div>
+            <div><dt>~Tokens</dt><dd id="s2m-stat-tokens">0</dd></div>
+          </dl>
+
+          <h3 class="panel__title">Log</h3>
+          <div class="log" id="s2m-log" aria-label="Conversion log"></div>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel__title">Preview</h2>
+          <pre class="s2m__preview" id="s2m-preview">Nothing built yet.</pre>
+        </section>
+      </div>
+    </main>
+
+    <script type="module" src="./site-to-markdown.js"></script>
+  </body>
+</html>

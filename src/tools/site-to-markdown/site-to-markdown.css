@@ -1,0 +1,185 @@
+.s2m {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.s2m__column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.s2m__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+/* ---------------------------------------------------------------- modes */
+
+.s2m__modes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.s2m__mode {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  background: var(--section);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.s2m__mode:hover {
+  border-color: var(--accent);
+}
+
+.s2m__mode[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--section));
+}
+
+.s2m__mode-name {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.s2m__mode-hint {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* ------------------------------------------------------------- dropzone */
+
+.s2m__dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 140px;
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  background: var(--section);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.s2m__dropzone:hover,
+.s2m__dropzone--over {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.s2m__dropzone--over {
+  background: color-mix(in srgb, var(--accent) 10%, var(--section));
+}
+
+.s2m__dropzone-icon {
+  font-size: 1.7rem;
+}
+
+.s2m__queue {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.s2m__queue--ready {
+  color: var(--success);
+}
+
+/* --------------------------------------------------------------- output */
+
+.s2m__progress {
+  margin-block: var(--space-4);
+}
+
+.s2m__progress .wm__progress-text {
+  margin-top: var(--space-2);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.s2m__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-2);
+  margin: 0 0 var(--space-5);
+  padding: var(--space-3);
+  background: var(--section);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.s2m__stats div {
+  min-width: 0;
+  text-align: center;
+}
+
+.s2m__stats dt {
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.s2m__stats dd {
+  margin: 2px 0 0;
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.s2m__preview {
+  max-height: 460px;
+  margin: 0;
+  padding: var(--space-3);
+  overflow: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  color: var(--text);
+}
+
+@media (max-width: 900px) {
+  .s2m {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .s2m__grid,
+  .s2m__stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -8,12 +8,15 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:e2e": "node scripts/e2e.mjs"
+    "test:e2e": "node scripts/e2e.mjs",
+    "fixture": "node scripts/fixture-site.mjs"
   },
   "dependencies": {
     "file-saver": "^2.0.5",
     "jszip": "^3.10.1",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "turndown": "^7.2.4",
+    "turndown-plugin-gfm": "^1.0.2"
   },
   "devDependencies": {
     "jsqr": "^1.4.0",
