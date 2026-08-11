@@ -253,18 +253,28 @@ You get `https://<name>.netlify.app`, reachable from any phone or computer.
 Cloudflare Pages is the same three settings. A `netlify.toml` with these
 values is already committed, so Netlify should pre-fill them.
 
-### Option B — GitHub Pages
+### Option B — GitHub Pages (this repo's live setup)
 
-A workflow is committed at
-[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). To turn it on:
+Live at **https://cheezwedge.github.io/Tool-Hub/**, published by
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) on every push to
+`main`.
 
-1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
-2. Push to `main`.
+Setting it up on a fresh repo takes three things, and the third is the one
+that is easy to miss:
 
-The site lands at `https://<user>.github.io/<repo>/`. Because Pages serves from
-a sub-path, the workflow builds with `BASE_PATH=/<repo>/`; `vite.config.js`
-reads that env var and every link and asset URL is rewritten to match. Nothing
-in the source hard-codes a domain.
+1. **Settings → Pages → Build and deployment → Source: GitHub Actions**
+   (not "Deploy from a branch"). Until this is set, the `configure-pages`
+   step fails with a 404 — the build itself is fine.
+2. **Settings → General → Default branch: `main`.** The `github-pages`
+   environment restricts deployments to the default branch, so if the repo
+   defaulted to some other branch the deploy job is blocked even though the
+   build passed.
+3. Push to `main`.
+
+The site serves from a sub-path, so the workflow builds with
+`BASE_PATH=/<repo>/` and `vite.config.js` rewrites every link and asset URL to
+match. Nothing in the source hard-codes a domain, which is why the same commit
+also deploys correctly to a domain root on Netlify.
 
 ### Custom domain (optional, later)
 
