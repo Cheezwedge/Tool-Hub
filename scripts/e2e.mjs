@@ -404,7 +404,27 @@ await page.fill("#s2m-url", FIXTURE);
 await page.locator("#s2m-delay").fill("0");
 await page.fill("#s2m-output-name", "fixture.md");
 await page.waitForTimeout(200);
+
+// A previous run has just finished, so the status line, stats and Download
+// button are all still describing its result. Starting a new run must retire
+// them straight away — otherwise the page advertises output that no longer
+// matches what is being built, and a reader cannot tell the two apart.
+const staleStatus = await page.locator("#s2m-progress-text").textContent();
 await page.click("#s2m-run");
+const freshState = await page.evaluate(() => ({
+  status: document.getElementById("s2m-progress-text").textContent,
+  statsHidden: document.getElementById("s2m-stats").hidden,
+  downloadDisabled: document.getElementById("s2m-download").disabled,
+}));
+check(
+  "starting a run clears the previous run's result",
+  freshState.status !== staleStatus &&
+    !/Done/.test(freshState.status) &&
+    freshState.statsHidden &&
+    freshState.downloadDisabled,
+  `was "${staleStatus.trim()}" → now "${freshState.status.trim()}"`
+);
+
 await page.waitForFunction(
   () => /Done|Nothing/.test(document.getElementById("s2m-progress-text").textContent),
   null,

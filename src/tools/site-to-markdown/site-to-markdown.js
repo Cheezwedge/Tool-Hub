@@ -551,6 +551,18 @@ function startRun() {
   el.run.disabled = true;
   el.stop.disabled = false;
   el.progressBar.style.width = "0%";
+
+  // Retire the previous run's result immediately. Leaving it on screen means
+  // the status line, the stats and the Download button all describe output
+  // that no longer matches what is being built.
+  state.output = "";
+  state.outputFilename = "";
+  el.progressText.textContent = "Working…";
+  el.stats.hidden = true;
+  el.download.disabled = true;
+  el.copy.disabled = true;
+  el.download.textContent = "Download";
+  el.preview.textContent = "Building…";
 }
 
 function finishRun(pages, settings) {
