@@ -33,6 +33,7 @@ Other commands:
 ```bash
 npm run build      # static output into dist/
 npm run preview    # serve the built dist/ on http://localhost:4173
+npm run fixture    # throwaway docs site the crawler tests use
 npm run test:e2e   # browser smoke test — see "Testing" below
 ```
 
@@ -258,11 +259,12 @@ are identical.
 
 ## Testing
 
-`scripts/e2e.mjs` drives a real Chromium through the hub and both tools:
+`scripts/e2e.mjs` drives a real Chromium through the hub and all three tools:
 rendering, downloads, settings persistence and reset, mobile layout, and the
 things that actually matter — that generated QR codes **scan back** to their
-input, and that watermarked output has the right dimensions, EXIF rotation,
-placement and shadow.
+input, that watermarked output has the right dimensions, EXIF rotation,
+placement and shadow, and that the Python crawler this repo generates really
+runs.
 
 ```bash
 npx playwright install chromium   # once
@@ -275,8 +277,17 @@ npm run test:e2e
 `npm run fixture` starts a throwaway CORS-permitting docs site. The crawler
 tests run against it, and the generated Python crawler is *actually executed*
 against it too — so the script this tool hands you is verified to run, not
-just to look right. That part needs `pip install requests beautifulsoup4
-markdownify`; without it that single check fails and the rest still run.
+just to look right. That part needs the crawler's own dependencies:
+
+```bash
+python3 -m pip install requests beautifulsoup4 markdownify
+```
+
+Use `python3 -m pip`, not bare `pip` — on a machine with several interpreters
+a bare `pip` can install into one that `python3` does not use, and the check
+then fails with `ModuleNotFoundError: No module named 'bs4'` even though the
+install reported success. Without those packages that single check fails and
+the other 53 still run.
 
 Set `BASE_URL`, `FIXTURE_URL`, or `PW_CHROMIUM` to point at different targets.
 
